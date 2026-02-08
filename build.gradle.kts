@@ -3,7 +3,7 @@ import io.izzel.taboolib.gradle.*
 plugins {
     `java-library`
     `maven-publish`
-    id("io.izzel.taboolib") version "2.0.20"
+    id("io.izzel.taboolib") version "2.0.30"
     id("org.jetbrains.kotlin.jvm") version "1.8.22"
 }
 
@@ -28,12 +28,14 @@ taboolib {
     }
 
     version {
-        taboolib = "6.2.0"
+        taboolib = "latest.release"
     }
 }
 
 repositories {
     mavenCentral()
+    maven(url = "https://repo.tabooproject.org/repository/releases")
+    maven(url = "https://repo.tabooproject.org/repository/snapshots")
 }
 
 dependencies {
@@ -41,6 +43,13 @@ dependencies {
     compileOnly("ink.ptms.core:v11902:11902-minimize:universal")
     compileOnly(kotlin("stdlib"))
     compileOnly(fileTree("libs"))
+}
+
+configurations.configureEach {
+    resolutionStrategy {
+        cacheDynamicVersionsFor(0, "seconds")
+        cacheChangingModulesFor(0, "seconds")
+    }
 }
 
 tasks.withType<JavaCompile> {
@@ -54,7 +63,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     }
 }
 
-configure<JavaPluginConvention> {
+java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
