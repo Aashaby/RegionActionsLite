@@ -28,7 +28,7 @@ taboolib {
     }
 
     version {
-        taboolib = "latest.release"
+        taboolib = "6.2.4-44a69de"
     }
 }
 
