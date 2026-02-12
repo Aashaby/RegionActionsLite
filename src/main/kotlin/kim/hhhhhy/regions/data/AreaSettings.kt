@@ -6,7 +6,9 @@ import kim.hhhhhy.regions.data.area.AreaType
 import kim.hhhhhy.regions.data.area.AreaType.*
 import kim.hhhhhy.regions.listeners.AreaListener
 import kim.hhhhhy.regions.utils.evalKether
+import kim.hhhhhy.regions.utils.getBukkitPlayer
 import org.bukkit.Location
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
@@ -67,6 +69,10 @@ data class AreaSettings(
             return variables().get<Any?>("@RegionEvent").orElse(null) as? Event ?: error("No event selected.")
         }
 
+        fun ScriptFrame.getRegionId(): String? {
+            return variables().get<Any?>("@RegionId").orElse(null) as? String
+        }
+
         private fun getAreas(location: Location): List<String> {
             val x = location.blockX
             val y = location.blockY
@@ -103,7 +109,7 @@ data class AreaSettings(
                     "toZ" to to.z,
                     "toW" to to.world?.name
                 ),
-                listOf("@RegionEvent" to event)
+                listOf("@RegionEvent" to event, "@RegionId" to id)
             )
             startTick(player, id, from, to, event)
         }
@@ -126,7 +132,7 @@ data class AreaSettings(
                     "toZ" to to.z,
                     "toW" to to.world?.name
                 ),
-                listOf("@RegionEvent" to event)
+                listOf("@RegionEvent" to event, "@RegionId" to id)
             )
         }
 
@@ -144,7 +150,7 @@ data class AreaSettings(
                     "toZ" to to.z,
                     "toW" to to.world?.name
                 ),
-                listOf("@RegionEvent" to event)
+                listOf("@RegionEvent" to event, "@RegionId" to id)
             )
         }
 
@@ -250,6 +256,41 @@ data class AreaSettings(
                 if (e is Cancellable) {
                     e.isCancelled = true
                 }
+            }
+        }
+
+        @KetherParser(["region-portal-hide"], shared = true)
+        fun parserPortalHide() = scriptParser {
+            actionNow {
+                val player = getBukkitPlayer()
+                val base = player.location
+                val regionId = getRegionId()
+                val ids = if (regionId != null) listOf(regionId) else getAreas(base)
+                ids.forEach { id ->
+                    val area = areasData[id] ?: return@forEach
+                    val pos = area.position
+                    AreaListener.fakePortalBlocksInBoxOnce(
+                        player,
+                        id,
+                        pos.world,
+                        pos.xMin.toInt(),
+                        pos.yMin.toInt(),
+                        pos.zMin.toInt(),
+                        pos.xMax.toInt(),
+                        pos.yMax.toInt(),
+                        pos.zMax.toInt()
+                    )
+                }
+                null
+            }
+        }
+
+        @KetherParser(["region-portal-restore"], shared = true)
+        fun parserPortalRestore() = scriptParser {
+            actionNow {
+                val player = getBukkitPlayer()
+                AreaListener.restoreFakePortalBlocks(player)
+                null
             }
         }
     }
